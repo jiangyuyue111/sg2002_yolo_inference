@@ -114,3 +114,79 @@
 
 - 本仓库工作流：改动须 commit + 更新 `CHANGELOG.md`（日期倒序，格式见文件头），本地提交即可不强制 push。
 - 时间线要点（CHANGELOG 里都有）：08-20 电机映射定论→追球跑通；08-21 相机挂死收尾（`abd339b63`）、降增益待复测（`f0b7690`）。
+
+---
+
+## 7. 内核 + 根文件系统构建工作流（接手方）
+
+> 2026-08-21 补充：接手方若需重建内核 / rootfs，按本节流程。**让舵机/电机动的那 3 处改动在接手方 fork 的 `my-dev` 分支**（`https://github.com/jiangyuyue111/tgoskits`），重建内核必须带上，见 §7.5。
+
+### 7.1 内核构建（tgoskits / StarryOS）
+
+```bash
+# 源码：建议拉接手方 fork（含 UART 改动）
+git remote add mine https://github.com/jiangyuyue111/tgoskits.git
+git fetch mine my-dev
+
+# 编译（Linux-musl PIE，产物在 target 目录）
+cd /path/to/tgoskits
+cargo starry --config os/StarryOS/configs/board/licheerv-nano-sg2002.toml
+# 产物: target/riscv64gc-unknown-linux-musl/release/starryos.bin (~13MB)
+```
+
+> 依赖：Rust nightly + `riscv64gc-unknown-linux-musl` 目标；交叉编译器 `riscv64-linux-musl-gcc`。
+
+### 7.2 生成 boot.sd（FIT image：内核 + 设备树）
+
+```bash
+# 需 mkimage（apt install u-boot-tools）
+./build_fit.sh   # 或 tgoskits 自带 scripts/mk-boot-sd.sh
+# 输入: starryos.bin + os/StarryOS/configs/board/licheerv-nano-sg2002.dtb
+# 产物: boot.sd (12.8MB, SD 卡 boot 分区里的那个文件)
+```
+
+> ⚠️ 内核是 Linux-musl PIE，**必须 FIT + `bootm`**，不能 `go 0x80200000`。
+
+### 7.3 SD 卡布局（rootfs）
+
+| 分区 | 文件系统 | 内容 |
+|------|---------|------|
+| 分区1 `sde1` | FAT32 ~512MB | `boot.sd`、`fip.bin`(OpenSBI+U-Boot 固件)、`ext4_100m.img` |
+| 分区2 `sde2` | ext4 ~7GB | **rootfs**：busybox + Python 3.11 (riscv64-musl) + 用户态文件 |
+
+rootfs 结构（已构建好，**增量更新即可，无需从零做**）：
+```
+/ (ext4)
+├── bin/python3.11          # RISC-V Python 3.11 (27.9MB)
+├── lib/                    # musl 动态库 + libpython3.11 + stdlib
+├── pipeline/               # ★ 真机管线 (real_pipeline.py 等)
+├── guest/linux/2.camera    # v4l2 采集 (640×480 YUYV)
+└── akars_tennis/model/     # yolov8n_tennis_v2.cvimodel + .so 库
+```
+
+### 7.4 部署 & 启动
+
+```bash
+# 更新内核：只换 boot.sd
+mount /dev/sde1 /mnt/sde1
+cp /mnt/sde1/boot.sd /mnt/sde1/boot.sd.old_$(date +%Y%m%d)  # 备份
+cp new_boot.sd /mnt/sde1/boot.sd
+sync && umount /mnt/sde1
+
+# rootfs 增量更新（免拔卡，走串口）：PC 端 PowerShell 跑 serial_push.py
+python board_tools/serial_push.py <文件> <板端路径>
+
+# 启动
+# U-Boot: fatload mmc 0:1 0x82200000 boot.sd && bootm 0x82200000
+# root@starry:/ #
+```
+
+### 7.5 ★ 重建内核必须带的 3 处改动（`my-dev` 分支，让舵机/电机动）
+
+| 文件 | 改动 | 作用 |
+|------|------|------|
+| `drivers/ax-driver/src/serial/ns16550.rs` | 加 `sg2002_uart_enable_clock()` / `sg2002_uart_ioblk_init()` | CLKGEN 时钟使能 + RSTC 复位解除 + IOBLK 上拉（UART1/2） |
+| `os/StarryOS/starryos/src/init.sh` | `/dev/pinmux` 写 `0x64 6` `0x68 6` `0x70 2` `0x74 2` + `stty 115200` | UART1 电机 / UART2 舵机引脚复用 + 波特率 |
+| `os/StarryOS/configs/board/licheerv-nano-sg2002-v4l2.toml` | 新增 v4l2 配置（含 sg2002-dwc2） | 相机链路 |
+
+> 新内核 update 时**不要回归**这些，否则电机/舵机"不动"会重现。这些改在 tgoskits，与摄像头链路（DWC2/v4l2/uvc）无关。

@@ -3,6 +3,12 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] HANDOVER 补充构建工作流(§7)
+
+### 新增
+- `docs/HANDOVER.md` 新增 **§7 内核+根文件系统构建工作流**：内核构建（`cargo starry` + 产物 `starryos.bin`）、boot.sd FIT image 生成（build_fit.sh/mk-boot-sd.sh）、SD 卡双分区布局（FAT32 boot + ext4 rootfs）、部署与启动、**§7.5 重建内核必须带的 3 处 UART 改动**（ns16550.rs CLKGEN/RSTC/IOBLK + init.sh pinmux/115200 + v4l2 config）。
+- `my-dev` 分支已推 GitHub fork（`jiangyuyue111/tgoskits` 的 `my-dev` 分支，tip `a006a5380`）——李明涛可 `git fetch mine my-dev` 直接拿到含 UART 改动的内核源码。
+
 ## [2026-08-21] 仓库重组:3仓库拆分(本仓库=真机管线)
 
 ### 变更
