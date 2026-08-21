@@ -3,6 +3,14 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] starryos_experiments 移除 ACT 推理残留副本
+
+### 变更
+- `sg2002_starryos_experiments` 仓库 `tgoskits_starryos/` **删除 6 个 ACT 文件**：`c/act_infer.c`、`c/smoke_act.sh`、`c/test_act.sh`、`cpp/act_infer.cpp`、`python/act_engine.py`、`rust/act_tpu.rs`。
+- 它们是 `sg2002_tpu_runtime` `_experiments/act/` 的重复副本，ACT 未跑通（缺 `act.cvimodel`/无验证），按"讲究实际，不报假"不再保留副本。
+- c/cpp/python/rust 目录保留 YOLO 检测相关（`build.sh`/`main.c`/`sg2002_tpu.*`/`tpu_infer_v4.py`/validator README 等）；`Maxye112/sg2002-act-starryos` 引用仅为参考上游，保留。
+- commit `19009b5`，已 push `jiangyuyue111/sg2002_starryos_experiments` main。
+
 ## [2026-08-21] tpu_runtime 仓库 ACT 标注清理
 
 ### 变更
