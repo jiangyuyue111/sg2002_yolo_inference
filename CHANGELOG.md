@@ -3,6 +3,11 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] docs/PREPROCESS_OPS.md — 预处理库来源与 YUYV 格式说明
+
+### 新增
+- `docs/PREPROCESS_OPS.md`(回答李明涛的说明):`preprocess_ops.c` 来源链——7 月中旬为 `tpu_infer_v4.py` 手写的 C 加速库(纯 Python resize 11s→C 143ms),8-21 重组收进 `c_lib/` 迭代到 v3(加 `yuyv_resize_planar`+`nms_decode`);UVC 原生 YUYV 是 **packed**(非 planar),而 `yuyv_resize_planar` 正是消费 packed 的设计,2.camera 输出格式无需改;板上 7/15 旧版(5.9KB)与 7/23 新版(9.7KB)两份 `.so` 对应关系。
+
 ## [2026-08-21] starryos_experiments 移除 ACT 推理残留副本
 
 ### 变更
