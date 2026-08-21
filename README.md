@@ -159,6 +159,7 @@ UVC 相机 ──阻塞读──> 640×480 YUYV ──preprocess(so)──> 640�
 | 文档 | 内容 |
 |------|------|
 | [`docs/HANDOVER.md`](docs/HANDOVER.md) | 👈 交接文档（蒋玉月→李明涛，最新现状） |
+| [`docs/REPRODUCE.md`](docs/REPRODUCE.md) | **复现指南**（李明涛在另一块板复现全流程 + 资产清单） |
 | [`docs/REAL_MACHINE_GUIDE.md`](docs/REAL_MACHINE_GUIDE.md) | 真机操作指南 |
 | [`docs/MANBO1234_ANALYSIS.md`](docs/MANBO1234_ANALYSIS.md) | manbo1234 ACT 方案对比分析 |
 | [`CHANGELOG.md`](CHANGELOG.md) | 变更记录 |

@@ -3,6 +3,15 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] 复现指南 + 管线资产发布
+
+### 新增
+- **`docs/REPRODUCE.md` 复现指南**：李明涛在另一块 SG2002 板复现真机管线的全流程——9 项资产清单（内核/rootfs/Python/动态库/模型/相机/管线）及每项获取方式、分步（内核含 UART 3 处改动 → rootfs → 动态库 → 模型 → 管线代码 → 环境变量三要素 → 验证顺序）、铁律与链接汇总。
+- **`pipeline/run.py` v7 同步进仓库**（板子 7/23 最新主程序，md5 `21d53884` 与板上一致）：自包含 Camera→Preprocess→TPU zero-copy→NMS 管线，默认加载 `/akars_tennis/model/yolov8n_tennis_v2.cvimodel` + `/guest/linux/2.camera`。
+- **主仓库 Releases `models-camera-20260821`**：`yolov8n_tennis_v2.cvimodel`（3.6MB，网球检测 TPU 模型）+ `/guest/linux/2.camera`（V4L2 相机 C 程序，板上仅二进制）——复现必需、此前不在 GitHub。
+- `README.md` 文档索引补 `docs/REPRODUCE.md`。
+- **Python 3.11.8 运行时未打包**（解释器 27M + stdlib 332M 过大），REPRODUCE.md §5.2 说明从原 rootfs 拷贝。
+
 ## [2026-08-21] 板端动态库发布到 tpu_runtime Releases
 
 ### 新增
