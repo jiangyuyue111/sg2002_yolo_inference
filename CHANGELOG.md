@@ -3,6 +3,15 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] tpu_runtime 仓库 ACT 标注清理
+
+### 变更
+- `sg2002_tpu_runtime` 仓库 `act_runtime/` → **`yolo_runtime/`**（真正跑通并验证的是 YOLO 网球检测 355×/40ms，非 ACT）。
+- **ACT 引擎代码**（C/Python/Rust）移入 `_experiments/act/`，README 如实标注 **"未跑通"**：缺 `act.cvimodel` 模型、`benchmark_report.md` 无 ACT 数据、"~68ms" 仅为估算。
+- `ACT_RUNTIME_README.md` → `YOLO_RUNTIME_README.md`、`ACT_BUILD_FULL.md` → `YOLO_BUILD_FULL.md`：标题、目录树 `ACT-Runtime/` → `yolo_runtime/`、上游参考（fork 来源）全部修正。
+- 仓库 `README.md` 目录表移除 `act_engine.py`/`act_tpu.rs` 误引用，新增 `_experiments/act/` 行；`yolo_runtime/rust/README.md` 删除 "ACT (多输入)" 节与 `ACT: ~68ms`。
+- commit `4ba8319`，已 push `jiangyuyue111/sg2002_tpu_runtime` main。
+
 ## [2026-08-21] Python 运行时 + rootfs 基础打包发布
 
 ### 新增
