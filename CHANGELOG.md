@@ -3,6 +3,11 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] HANDOVER 构建工作流补成果归属说明
+
+### 变更
+- `docs/HANDOVER.md` §7 引言补**成果归属说明**：内核构建方案 / `boot.sd` / FIT image（`mk-boot-sd.sh`、`build_fit.sh`）/ 启动方案笔记等**内核构建相关文档与成果均为李明涛的工作产出**（蒋玉月仅整理引用）；rootfs 布局与用户态管线搭建来自蒋玉月。§7.2 同步标注 boot.sd 构建方案归属李明涛。
+
 ## [2026-08-21] HANDOVER 补充构建工作流(§7)
 
 ### 新增

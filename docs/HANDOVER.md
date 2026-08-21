@@ -120,6 +120,8 @@
 ## 7. 内核 + 根文件系统构建工作流（接手方）
 
 > 2026-08-21 补充：接手方若需重建内核 / rootfs，按本节流程。**让舵机/电机动的那 3 处改动在接手方 fork 的 `my-dev` 分支**（`https://github.com/jiangyuyue111/tgoskits`），重建内核必须带上，见 §7.5。
+>
+> **成果归属说明**：本节所涉内核构建方案、`boot.sd`/FIT image 生成（`mk-boot-sd.sh`、`build_fit.sh`）、启动方案笔记等**内核构建相关文档与成果均来自李明涛**（此前由李明涛构建/提供，本交接方仅整理引用，便于接手方使用）；rootfs 布局与用户态管线搭建来自蒋玉月。
 
 ### 7.1 内核构建（tgoskits / StarryOS）
 
@@ -137,6 +139,8 @@ cargo starry --config os/StarryOS/configs/board/licheerv-nano-sg2002.toml
 > 依赖：Rust nightly + `riscv64gc-unknown-linux-musl` 目标；交叉编译器 `riscv64-linux-musl-gcc`。
 
 ### 7.2 生成 boot.sd（FIT image：内核 + 设备树）
+
+> 本小节构建方案（FIT ITS、`mk-boot-sd.sh`、`build_fit.sh`）为**李明涛内核构建工作成果**（见 §7 引言归属说明）。
 
 ```bash
 # 需 mkimage（apt install u-boot-tools）
