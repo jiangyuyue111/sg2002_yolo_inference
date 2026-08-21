@@ -3,6 +3,13 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] 板端动态库发布到 tpu_runtime Releases
+
+### 新增
+- **`sg2002_board_libs-20260821.tar.gz`（10MB）发布** → `sg2002_tpu_runtime` 仓库 Releases（tag `board-libs-20260821`）：含板端 rootfs `/lib` 与 `/akars_tennis/lib` 全部 23 个 `.so`（musl 运行时组 + libffi + TPU SDK 7/10 与 7/14 两套 + yolo_ops + preprocess_ops），符号链接完整保留，李明涛可直接下载解压 `tar xzf ... -C /`。
+- 包内容为 **2026-08-21 真机 SD 卡 rootfs 逐字节拷贝**（`usbipd attach` → WSL2 挂载 ext4 直接读），23 个文件大小全部与板端实测清单 1:1 校验一致；sha256 `4aa2a0ea894da7317a2bef55841393a78dcb4b30417f6582f5b4abea8f64ac0f`。
+- `docs/HANDOVER.md` §7.6「获取方式」补 release 下载链接（首选直接下载打包）。
+
 ## [2026-08-21] HANDOVER §7.6 板端动态库清单改为串口实测
 
 ### 变更

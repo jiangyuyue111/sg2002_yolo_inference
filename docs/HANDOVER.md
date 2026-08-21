@@ -242,4 +242,7 @@ export LD_LIBRARY_PATH=/lib:/akars_tennis/lib
 
 > ⚠️ **板端 busybox 没有 `ldd`/`readelf`**（`ldd: not found`），验证 .so 链接关系需在 PC 端用 `riscv64-linux-musl-objdump -p` / `readelf -d` 查。
 
-**获取方式**：从已跑通的板子 rootfs 直接拷 `/lib`、`/akars_tennis/lib`（`sync` 后落盘）；或按来源列从交叉工具链 / TPU SDK / 仓库 `c_lib/` 重新获取。
+**获取方式**：
+1. **直接下载打包（推荐）**：`sg2002_board_libs-20260821.tar.gz`（10MB，含上表全部 23 个 `.so`，符号链接完整保留）→
+   `https://github.com/jiangyuyue111/sg2002_tpu_runtime/releases/tag/board-libs-20260821`，板端解压：`tar xzf sg2002_board_libs-20260821.tar.gz -C /`。此包为 2026-08-21 从真机 SD 卡 rootfs 逐字节拷贝（与串口实测清单 1:1 一致）。
+2. 从已跑通的板子 rootfs 直接拷 `/lib`、`/akars_tennis/lib`（`sync` 后落盘）；或按来源列从交叉工具链 / TPU SDK / 仓库 `c_lib/` 重新获取。
