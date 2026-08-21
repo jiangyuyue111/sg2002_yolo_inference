@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+
+# Build artifacts
+*.so
+*.o
+*.bin
+*.itb
+*.img
+*.out
+*.int8
+*.meta
+*.cvimodel
+*.onnx
+
+# 保留的第三方上游参考（本地副本，不入库；在线: chenlongos/AKA-00）
+AKA-00/
+
+# 归档
+archive/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
