@@ -3,10 +3,18 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-## [2026-08-21] HANDOVER 补板端 Python 动态库清单(§7.6)
+## [2026-08-21] HANDOVER §7.6 板端动态库清单改为串口实测
+
+### 变更
+- `docs/HANDOVER.md` §7.6 **改为 COM6 串口实测数据**（`ls -l` 直读板端 `/lib`、`/akars_tennis/lib`），替代原先的推断表。实测要点：
+  - **TPU SDK 库在 `/lib` 与 `/akars_tennis/lib` 各一份**，版本不同（7/10 版 vs 7/14 版）：`libcviruntime.so` 466KB/574KB、`libcvikernel.so`、`libcvimath.so`；`libcvi_ive_tpu.so`、`yolo_ops.so`、`yolo_ops_minimal.so` 仅 `/lib` 有（旧表未列）。
+  - `/akars_tennis/lib` 自备 4MB `libc.so`（非 musl）、`libcnpy.so`、`libz.so.1.2.11`。
+  - `preprocess_ops.so` 两处各一份（7/23 版 9.7KB / 7/15 版 5.9KB）。
+  - Python 3.11.8 实测确认（`/bin/python3.11` 28MB，`/bin/python3` 为 symlink）；板端无 `ldd`/`readelf`，验证链接关系需 PC 端工具链。
+  - 新增 musl 运行时组 `libatomic.so.1`（旧表未列）。
 
 ### 新增
-- `docs/HANDOVER.md` 新增 **§7.6 板端 Python 动态库清单**：rootfs `/lib` 与 `/akars_tennis/lib` 下的 6 个关键 `.so`（musl ld/libc、libstdc++/libgcc、`libffi.so`、`libcviruntime.so`、`preprocess_ops.so`）的位置/作用/来源，附环境变量三要素（PYTHONHOME/LD_PRELOAD/LD_LIBRARY_PATH）。明确这些库在 rootfs 层、不在 tgoskits 内核仓库（李明涛在内核仓库里看不到是正常的）。
+- `docs/HANDOVER.md` 新增 **§7.6 板端 Python 动态库清单**：rootfs `/lib` 与 `/akars_tennis/lib` 下的关键 `.so`（musl ld/libc、libstdc++/libgcc、`libffi.so`、`libcviruntime.so`、`preprocess_ops.so`）的位置/作用/来源，附环境变量三要素（PYTHONHOME/LD_PRELOAD/LD_LIBRARY_PATH）。明确这些库在 rootfs 层、不在 tgoskits 内核仓库（李明涛在内核仓库里看不到是正常的）。
 
 ## [2026-08-21] HANDOVER 构建工作流补成果归属说明
 

@@ -206,15 +206,40 @@ export LD_PRELOAD=/lib/libffi.so
 export LD_LIBRARY_PATH=/lib:/akars_tennis/lib
 ```
 
-| 库 | 板上位置 | 作用 | 来源 |
-|----|---------|------|------|
-| `ld-musl-riscv64.so.1` | `/lib` | musl 动态链接器（所有 .so 的加载入口） | `riscv64-linux-musl-cross` 工具链 |
-| `libc.so` | `/lib` | musl C 库 | 工具链 |
-| `libstdc++.so` / `libgcc_s.so.1` | `/lib` | C++ / GCC 运行时（TPU SDK 依赖） | 工具链 |
-| **`libffi.so`** | `/lib` | **Python ctypes 必需**（`LD_PRELOAD` 指定） | Python 3.11 riscv64-musl 运行时 |
-| **`libcviruntime.so`** | `/akars_tennis/lib` | TPU CVI_NN 运行时（574KB，推理核心） | TPU SDK（tpu-sdk-sg200x） |
-| **`preprocess_ops.so`** | `/lib` 或 `/akars_tennis/lib` | YUYV→CHW C 加速预处理 | 仓库 `c_lib/` 交叉编译（`make riscv`） |
+下表为 **2026-08-21 实测**（COM6 串口直读板端 `ls -l`），与旧推断表有出入，以此为准。
 
-> Python 解释器 `/bin/python3.11` + 标准库 `/lib/python3.11/` 属 Python 运行时本体，与上述 `.so` 一并部署在 rootfs。
+**A. musl 运行时组**（来源：`riscv64-linux-musl-cross` 工具链 + Python 3.11 musl 运行时）—— 全在 `/lib`：
+
+| 库 | 实测大小 | 作用 |
+|----|---------|------|
+| `ld-musl-riscv64.so.1 → libc.so` | symlink | musl 动态链接器（所有 .so 的加载入口） |
+| `libc.so` | 875KB | musl C 库 |
+| `libstdc++.so → libstdc++.so.6` | 16MB | C++ 运行时（TPU SDK / c_lib 依赖） |
+| `libgcc_s.so.1` | 598KB | GCC 运行时 |
+| `libatomic.so.1` | 142KB | 原子操作运行时（RISC-V 无原生 CAS 指令时必需） |
+| **`libffi.so → libffi.so.8`** | 37KB | **Python ctypes 必需**（`LD_PRELOAD=/lib/libffi.so`） |
+
+**B. TPU SDK 组**（来源：TPU SDK `tpu-sdk-sg200x`，CVI_NN 运行时）—— **`/lib` 与 `/akars_tennis/lib` 各一份**，版本不同：
+
+| 库 | `/lib`（7/10 版） | `/akars_tennis/lib`（7/14 版） | 作用 |
+|----|---------|---------|------|
+| `libcviruntime.so` | 466KB | 574KB | TPU CVI_NN 推理运行时（核心） |
+| `libcvikernel.so` | 279KB | 308KB | TPU kernel |
+| `libcvimath.so` | 56KB | 66KB | TPU 数学库 |
+| `libcvi_ive_tpu.so` | 577KB | —（仅 `/lib` 有） | IVE 图像处理 TPU 库 |
+| `yolo_ops.so` | 82KB | —（仅 `/lib` 有） | TPU YOLO 算子 |
+| `yolo_ops_minimal.so` | 12KB | —（仅 `/lib` 有） | TPU YOLO 精简算子 |
+
+> `/akars_tennis/lib` 还自备一套：`libc.so`（**4MB，非 musl，TPU SDK 自带完整 C 库**）、`libcnpy.so`（读 .npz）、`libz.so.1.2.11`（zlib）、`libstdc++.so.6`/`libgcc_s.so.1`。`LD_LIBRARY_PATH=/lib:/akars_tennis/lib` 顺序即解析优先级：**musl 组和 cvi 组先命中 `/lib`**，akars 里的 4MB libc 只在 TPU 库自身需要时兜底。
+
+**C. 仓库自产**（来源：本仓库 `c_lib/` 交叉编译 `make riscv`）：
+
+| 库 | 位置 | 实测大小 | 作用 |
+|----|------|---------|------|
+| `preprocess_ops.so` | `/lib` 与 `/akars_tennis/lib` **各一份**（7/23 版 9.7KB / 7/15 版 5.9KB） | — | YUYV→CHW C 加速预处理（~143ms → 更快） |
+
+**Python 运行时本体**：解释器 `/bin/python3.11`（28MB，实测 `Python 3.11.8`，`/bin/python3` 为 symlink）+ 标准库 `/lib/python3.11/`；板端 `site-packages` 目前仅 `README.txt`，无 pip 包。
+
+> ⚠️ **板端 busybox 没有 `ldd`/`readelf`**（`ldd: not found`），验证 .so 链接关系需在 PC 端用 `riscv64-linux-musl-objdump -p` / `readelf -d` 查。
 
 **获取方式**：从已跑通的板子 rootfs 直接拷 `/lib`、`/akars_tennis/lib`（`sync` 后落盘）；或按来源列从交叉工具链 / TPU SDK / 仓库 `c_lib/` 重新获取。
