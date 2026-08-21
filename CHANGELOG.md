@@ -3,6 +3,14 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] Python 运行时 + rootfs 基础打包发布
+
+### 新增
+- **主仓库 Releases `python-runtime-20260821`**（23.8MB）：Python 3.11.8 完整运行时——`/bin/python3.11`（27M，静态 musl，无 libpython 依赖）+ `bin/python3` / `python3-config` symlink + `/lib/python3.11` stdlib（197M，含 `lib-dynload` 15M C 扩展：`_ctypes`/`_socket`/`_ssl`）。**排除** `config-3.11-riscv64-linux-gnu`（136M 构建资产，仅重编 C 扩展需要）+ 全部 `__pycache__`（自动重生成）。sha256 `554ed206c4a3fd1423f0f35d5891414b8130be551f6a2b6d6174c5c6542ed619`。
+- **主仓库 Releases `rootfs-base-20260821`**（1.4MB）：busybox（1.15M，静态链接）+ 全部 **406 个 applet 链接**（/bin /sbin /usr/bin /usr/sbin）+ `lib/cv181x_tpu.ko`（69K，TPU 驱动模块 `cvi_tpu_*`）+ `akars-tennis-validator`（859K）+ `run.sh` + `validation/`（284K，3 张网球测试图）。sha256 `ea911f4cfabf26f01275395d1e266fc4c6b1adc6998d7f8b1b2a96ac4e552480`。
+- **发现板子 `/init.sh` 是 269B 全零损坏文件**（od 验证，不含 pinmux 配置）——因此 init.sh **未打包**，板端 pinmux（UART1 `0x64/0x68=6` / UART2 `0x70/0x74=2`）+ stty 配置以内核构建树为准（REPRODUCE.md §7.5）。
+- `docs/REPRODUCE.md` 更新：§1 资产清单 3/4 行、直链段（两个→四个 Releases）、§3②③ 步骤改为下包解压、§5.2 改为「已打包」。至此复现资产 **9/9 全部在 GitHub**，无需再从蒋玉月板子拷贝。
+
 ## [2026-08-21] 复现指南 + 管线资产发布
 
 ### 新增
@@ -10,7 +18,7 @@
 - **`pipeline/run.py` v7 同步进仓库**（板子 7/23 最新主程序，md5 `21d53884` 与板上一致）：自包含 Camera→Preprocess→TPU zero-copy→NMS 管线，默认加载 `/akars_tennis/model/yolov8n_tennis_v2.cvimodel` + `/guest/linux/2.camera`。
 - **主仓库 Releases `models-camera-20260821`**：`yolov8n_tennis_v2.cvimodel`（3.6MB，网球检测 TPU 模型）+ `/guest/linux/2.camera`（V4L2 相机 C 程序，板上仅二进制）——复现必需、此前不在 GitHub。
 - `README.md` 文档索引补 `docs/REPRODUCE.md`。
-- **Python 3.11.8 运行时未打包**（解释器 27M + stdlib 332M 过大），REPRODUCE.md §5.2 说明从原 rootfs 拷贝。
+- Python 3.11.8 运行时当时未打包（解释器 27M + stdlib 332M 过大）——**已于同日补发** `python-runtime-20260821` release，见上方条目。
 
 ## [2026-08-21] 板端动态库发布到 tpu_runtime Releases
 

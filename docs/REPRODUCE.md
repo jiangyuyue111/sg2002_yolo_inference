@@ -11,17 +11,19 @@
 |---|------|------|---------|
 | 1 | **内核** | StarryOS + UART 修复 3 处 | fork `jiangyuyue111/tgoskits` 的 **`my-dev` 分支**（含改动） |
 | 2 | **boot.sd / fip.bin** | FIT 内核镜像 + OpenSBI/U-Boot | 按 `HANDOVER §7.2` 构建 / 实验仓库 kernel 分支 |
-| 3 | **rootfs 基础** | busybox（1.1MB）+ 基础文件系统 | 从原 rootfs 拷或自建（§7.3） |
-| 4 | **Python 3.11.8** | `/bin/python3.11`（27M）+ `/lib/python3.11`（332M） | **太大未打包**，从原 rootfs 拷（见 §5.2） |
+| 3 | **rootfs 基础** | busybox（1.15M，406 applet 链接）+ `cv181x_tpu.ko` + validator | ✅ Releases：`rootfs-base-20260821`（1.4M） |
+| 4 | **Python 3.11.8** | `/bin/python3.11`（27M）+ `/lib/python3.11` stdlib（197M） | ✅ Releases：`python-runtime-20260821`（23.8M） |
 | 5 | **动态库 23 个 .so** | musl 运行时 + libffi + TPU SDK 两套 + yolo_ops + preprocess_ops | ✅ Releases：`sg2002_tpu_runtime` → `board-libs-20260821` |
 | 6 | **模型** | `yolov8n_tennis_v2.cvimodel`（3.6M，管线核心） | ✅ Releases：`sg2002_yolo_inference` → `models-camera-20260821` |
 | 7 | **相机程序** | `/guest/linux/2.camera`（C 二进制，30K） | ✅ 同上 release（板上仅二进制无源码） |
 | 8 | **管线代码** | `pipeline/*.py` + **`run.py` v7 主程序** | ✅ GitHub 主仓库（run.py 已同步） |
 | 9 | **c_lib** | `preprocess_ops.c` 源码（交叉编译出 `.so`） | ✅ GitHub 主仓库 `c_lib/` |
 
-**两个 Releases 直链：**
+**四个 Releases 直链：**
 - 动态库：https://github.com/jiangyuyue111/sg2002_tpu_runtime/releases/tag/board-libs-20260821
 - 模型+相机：https://github.com/jiangyuyue111/sg2002_yolo_inference/releases/tag/models-camera-20260821
+- Python 运行时：https://github.com/jiangyuyue111/sg2002_yolo_inference/releases/tag/python-runtime-20260821
+- rootfs 基础：https://github.com/jiangyuyue111/sg2002_yolo_inference/releases/tag/rootfs-base-20260821
 
 ---
 
@@ -57,16 +59,22 @@ git fetch origin my-dev && git checkout my-dev            # 含让舵机/电机�
 
 ### ② rootfs 基础 + 动态库
 
-rootfs 用 busybox + ext4 布局（`HANDOVER §7.3`）。动态库直接下包解压：
+rootfs 基础（busybox 全套 + TPU 内核模块 + validator）直接下包解压，无需自建：
 
 ```bash
-# PC 下载 → 免拔卡走串口（serial_push.py）或直接写 SD 卡 ext4 分区
-tar xzf sg2002_board_libs-20260821.tar.gz -C /   # 解压出 /lib 与 /akars_tennis/lib
+tar xzf sg2002_rootfs_base-20260821.tar.gz -C /   # busybox + lib/cv181x_tpu.ko + akars-tennis-validator
+tar xzf sg2002_board_libs-20260821.tar.gz -C /    # 动态库 → /lib 与 /akars_tennis/lib
 ```
 
-### ③ Python 3.11.8（不在 release，见 §5.2）
+> ⚠️ **init.sh 不在包里**：板子 SD 卡上的 `/init.sh` 是 269B **全零损坏文件**（od 验证，不含配置）。板端 pinmux（UART1 `0x64/0x68=6` / UART2 `0x70/0x74=2`）+ stty 115200 配置以内核构建树的 init.sh 为准（§7.5），重建内核时自动带入。
 
-从蒋玉月板子 rootfs 拷贝 `/bin/python3.11` + `/lib/python3.11`（`sync` 后落盘）；或 `riscv64-linux-musl` 交叉编译 Python 3.11.8。**不能省**——管线是 Python 写的。
+### ③ Python 3.11.8
+
+```bash
+tar xzf sg2002_python_runtime-20260821.tar.gz -C /   # bin/python3.11 + lib/python3.11（stdlib，排除构建资产/__pycache__）
+```
+
+**不能省**——管线是 Python 写的。
 
 ### ④ 模型 + 相机程序
 
@@ -123,9 +131,11 @@ python3 -u /pipeline/run.py        # v7 主程序：Camera→Preprocess→TPU→
 - 串口操作用 raw fd + termios（管线代码已处理）
 - 验证 .so 链接关系在 **PC 端**用 `riscv64-linux-musl-objdump -p` / `readelf -d`
 
-### 5.2 为什么 Python 运行时没打包
-- `/bin/python3.11`（27M）+ `/lib/python3.11`（332M stdlib）太大，GitHub Releases 不适合
-- 最可靠：**从已跑通的板子 rootfs 拷**（`sync` 后落盘）。需要重建时再补
+### 5.2 Python 运行时已打包（python-runtime-20260821）
+- 解释器 27M + stdlib 197M，gzip 后仅 **23.8M**（stdlib .py 压缩率极高）
+- **排除**：`config-3.11-riscv64-linux-gnu`（136M 构建资产：Makefile / `libpython3.11.a`，仅重编 C 扩展需要）+ 全部 `__pycache__`（解释器自动重生成）
+- 直接下 release 解压，无需从原板子拷贝
+- rootfs 基础同理已打包（`rootfs-base-20260821`，busybox 全套 + `cv181x_tpu.ko`）
 
 ### 5.3 铁律（板上必守）
 1. **每次断电重启**（UVC DMA 挂死后用户态无法恢复，只能断电）
@@ -143,6 +153,8 @@ python3 -u /pipeline/run.py        # v7 主程序：Camera→Preprocess→TPU→
 | 主仓库（管线代码） | https://github.com/jiangyuyue111/sg2002_yolo_inference |
 | 动态库 Releases | https://github.com/jiangyuyue111/sg2002_tpu_runtime/releases/tag/board-libs-20260821 |
 | 模型+相机 Releases | https://github.com/jiangyuyue111/sg2002_yolo_inference/releases/tag/models-camera-20260821 |
+| Python 运行时 Releases | https://github.com/jiangyuyue111/sg2002_yolo_inference/releases/tag/python-runtime-20260821 |
+| rootfs 基础 Releases | https://github.com/jiangyuyue111/sg2002_yolo_inference/releases/tag/rootfs-base-20260821 |
 | TPU 运行时实验 | https://github.com/jiangyuyue111/sg2002_tpu_runtime |
 | StarryOS 平台实验 | https://github.com/jiangyuyue111/sg2002_starryos_experiments |
 | tgoskits fork（my-dev） | https://github.com/jiangyuyue111/tgoskits |
