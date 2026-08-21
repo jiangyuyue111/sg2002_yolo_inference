@@ -194,3 +194,27 @@ python board_tools/serial_push.py <文件> <板端路径>
 | `os/StarryOS/configs/board/licheerv-nano-sg2002-v4l2.toml` | 新增 v4l2 配置（含 sg2002-dwc2） | 相机链路 |
 
 > 新内核 update 时**不要回归**这些，否则电机/舵机"不动"会重现。这些改在 tgoskits，与摄像头链路（DWC2/v4l2/uvc）无关。
+
+### 7.6 板端 Python 动态库清单（rootfs `/lib` 与 `/akars_tennis/lib`）
+
+> 这些库在**板端 rootfs（SD 卡 ext4）**，**不在 tgoskits 内核仓库**——内核源码树只产出 `starryos.bin`/`boot.sd` 并对外提供设备节点（`/dev/ttyS1` 电机、`/dev/ttyS2` 舵机、`/dev/video0` 相机、`/dev/tpu`）；Python 解释器 + 动态库属 rootfs 层，内核仓库里看不到是正常的。
+
+环境变量三要素（任何板端 Python 都必须带，见 §3.6）：
+```bash
+export PYTHONHOME=/
+export LD_PRELOAD=/lib/libffi.so
+export LD_LIBRARY_PATH=/lib:/akars_tennis/lib
+```
+
+| 库 | 板上位置 | 作用 | 来源 |
+|----|---------|------|------|
+| `ld-musl-riscv64.so.1` | `/lib` | musl 动态链接器（所有 .so 的加载入口） | `riscv64-linux-musl-cross` 工具链 |
+| `libc.so` | `/lib` | musl C 库 | 工具链 |
+| `libstdc++.so` / `libgcc_s.so.1` | `/lib` | C++ / GCC 运行时（TPU SDK 依赖） | 工具链 |
+| **`libffi.so`** | `/lib` | **Python ctypes 必需**（`LD_PRELOAD` 指定） | Python 3.11 riscv64-musl 运行时 |
+| **`libcviruntime.so`** | `/akars_tennis/lib` | TPU CVI_NN 运行时（574KB，推理核心） | TPU SDK（tpu-sdk-sg200x） |
+| **`preprocess_ops.so`** | `/lib` 或 `/akars_tennis/lib` | YUYV→CHW C 加速预处理 | 仓库 `c_lib/` 交叉编译（`make riscv`） |
+
+> Python 解释器 `/bin/python3.11` + 标准库 `/lib/python3.11/` 属 Python 运行时本体，与上述 `.so` 一并部署在 rootfs。
+
+**获取方式**：从已跑通的板子 rootfs 直接拷 `/lib`、`/akars_tennis/lib`（`sync` 后落盘）；或按来源列从交叉工具链 / TPU SDK / 仓库 `c_lib/` 重新获取。

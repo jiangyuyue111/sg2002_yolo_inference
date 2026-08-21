@@ -3,6 +3,11 @@
 本文件记录 sg2002_yolo_inference 项目的功能变更，日期倒序。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [2026-08-21] HANDOVER 补板端 Python 动态库清单(§7.6)
+
+### 新增
+- `docs/HANDOVER.md` 新增 **§7.6 板端 Python 动态库清单**：rootfs `/lib` 与 `/akars_tennis/lib` 下的 6 个关键 `.so`（musl ld/libc、libstdc++/libgcc、`libffi.so`、`libcviruntime.so`、`preprocess_ops.so`）的位置/作用/来源，附环境变量三要素（PYTHONHOME/LD_PRELOAD/LD_LIBRARY_PATH）。明确这些库在 rootfs 层、不在 tgoskits 内核仓库（李明涛在内核仓库里看不到是正常的）。
+
 ## [2026-08-21] HANDOVER 构建工作流补成果归属说明
 
 ### 变更
